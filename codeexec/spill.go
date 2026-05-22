@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 const nestedToolOutputSpillThreshold = 32 * 1024

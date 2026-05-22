@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"ai-sdk/oauthx"
+	"github.com/proiceremo/ai-sdk/oauthx"
 	mcpauth "github.com/modelcontextprotocol/go-sdk/auth"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"

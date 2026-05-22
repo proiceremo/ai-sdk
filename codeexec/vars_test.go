@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	aitools "ai-sdk/tools"
-	llm "ai-sdk"
+	aitools "github.com/proiceremo/ai-sdk/tools"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // TestVarsPersistenceAcrossMultipleCalls verifies that vars persist across multiple

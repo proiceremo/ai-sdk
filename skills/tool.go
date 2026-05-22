@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	llm "ai-sdk"
-	"ai-sdk/tools"
+	llm "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/tools"
 )
 
 func NewTool(loader *Loader) llm.Tool {

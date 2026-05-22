@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"ai-sdk/oauthx"
+	"github.com/proiceremo/ai-sdk/oauthx"
 	"golang.org/x/oauth2"
 )
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	. "ai-sdk"
-	"ai-sdk/providers/internal/httpx"
+	. "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/providers/internal/httpx"
 	"golang.org/x/oauth2"
 )
 

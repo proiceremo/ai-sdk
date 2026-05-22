@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // API-key path: a single system block carries cache_control. We don't

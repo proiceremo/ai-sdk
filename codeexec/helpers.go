@@ -1,6 +1,6 @@
 package codeexec
 
-import llm "ai-sdk"
+import llm "github.com/proiceremo/ai-sdk"
 
 func withToolRuntimeVars(ctx llm.ToolContext, sessionID, actorID, runID, proHome string) llm.ToolContext {
 	if ctx.Vars == nil {

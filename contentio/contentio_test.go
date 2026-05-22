@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 func TestURLToDataURIReturnsErrorOnHTTPFailure(t *testing.T) {

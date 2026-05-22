@@ -1,7 +1,7 @@
 package openai
 
 import (
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 	"testing"
 )
 

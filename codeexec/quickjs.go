@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 
 	"github.com/fastschema/qjs"
 )

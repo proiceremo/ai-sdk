@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 type GenericTool[T any] struct {

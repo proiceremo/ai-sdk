@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 func NewContentBlockFromURI(uri string, mimeType *string) (llm.ContentBlock, error) {

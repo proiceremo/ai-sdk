@@ -1,4 +1,4 @@
-module ai-sdk
+module github.com/proiceremo/ai-sdk
 
 go 1.25.9
 

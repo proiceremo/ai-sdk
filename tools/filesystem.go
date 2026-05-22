@@ -33,7 +33,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 
 	dotignore "github.com/codeglyph/go-dotignore/v2"
 	"github.com/gen2brain/go-fitz"

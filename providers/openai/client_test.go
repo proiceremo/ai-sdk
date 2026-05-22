@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	. "ai-sdk"
-	"ai-sdk/tools"
+	. "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/tools"
 )
 
 func TestOpenAIBuildCompletionParamsIncludesResponseFormat(t *testing.T) {

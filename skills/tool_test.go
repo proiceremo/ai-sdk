@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 func TestSkillsToolDiscoversGlobalAndWorkspaceSkills(t *testing.T) {

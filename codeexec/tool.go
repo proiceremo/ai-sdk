@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	llm "ai-sdk"
-	aitools "ai-sdk/tools"
+	llm "github.com/proiceremo/ai-sdk"
+	aitools "github.com/proiceremo/ai-sdk/tools"
 )
 
 const nestedFinishMarker = "__ai_sdk_final"

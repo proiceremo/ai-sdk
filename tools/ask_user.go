@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 type AskUserInput struct {

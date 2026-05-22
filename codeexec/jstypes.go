@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // BuildToolTypeDeclarations renders the model-facing TypeScript declarations

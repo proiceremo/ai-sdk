@@ -3,7 +3,7 @@ package tools
 import (
 	"testing"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 func TestAskUserToolRequiresPrompt(t *testing.T) {

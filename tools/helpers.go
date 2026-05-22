@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // JSONResult builds a ToolResult around a value rendered as pretty-printed

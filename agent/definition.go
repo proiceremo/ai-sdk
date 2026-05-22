@@ -3,7 +3,7 @@ package agent
 import (
 	"encoding/json"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // Definition is a declarative agent recipe.

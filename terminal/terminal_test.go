@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 func TestHarmlessCommandLineAllowsReadAndSimpleCommands(t *testing.T) {

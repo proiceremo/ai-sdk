@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	. "ai-sdk"
+	. "github.com/proiceremo/ai-sdk"
 
 	"cloud.google.com/go/auth"
 )

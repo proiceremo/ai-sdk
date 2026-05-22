@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	llm "ai-sdk"
+	llm "github.com/proiceremo/ai-sdk"
 )
 
 // execTool is a thin convenience wrapper that calls a tool with a typed

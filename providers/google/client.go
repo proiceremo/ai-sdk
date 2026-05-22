@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	. "ai-sdk"
-	"ai-sdk/contentio"
-	"ai-sdk/providers/internal/httpx"
+	. "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/contentio"
+	"github.com/proiceremo/ai-sdk/providers/internal/httpx"
 
 	"cloud.google.com/go/auth"
 	"cloud.google.com/go/auth/credentials"

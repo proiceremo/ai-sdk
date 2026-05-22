@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	. "ai-sdk"
+	. "github.com/proiceremo/ai-sdk"
 )
 
 func TestGoogleCreateCompletionStream(t *testing.T) {

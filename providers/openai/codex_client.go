@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	llm "ai-sdk"
-	"ai-sdk/oauthx"
+	llm "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/oauthx"
 	"github.com/gorilla/websocket"
 	"golang.org/x/oauth2"
 )
