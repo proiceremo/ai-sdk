@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -35,6 +36,8 @@ type Config struct {
 	CacheKey     string            `json:"cache_key,omitempty"`
 	AuthParams   map[string]string `json:"auth_params,omitempty"`
 }
+
+const ClaudeCodeOAuthTokenEnv = "CLAUDE_CODE_OAUTH_TOKEN"
 
 type Credentials struct {
 	AccessToken  string    `json:"access_token"`
@@ -69,6 +72,8 @@ type FileStore struct {
 	Dir string
 }
 
+var providerRefreshMu sync.Mutex
+
 // Root resolves the canonical proagent credentials root. PRO_HOME wins when
 // set (containerised runs, bench-style sandboxes); otherwise we fall back to
 // ~/.pro. Empty string means we have no place to write — callers treat that
@@ -88,6 +93,17 @@ func Root() string {
 // (openai-codex, anthropic-oauth, claude-code, …). Keyed by provider id.
 func ProvidersStore() FileStore {
 	root := Root()
+	if root == "" {
+		return FileStore{}
+	}
+	return FileStore{Dir: filepath.Join(root, "oauth", "providers")}
+}
+
+// ProvidersStoreFromRoot returns the provider OAuth store under an explicit
+// pro-style root. It is useful for callers like benchmark runners that mount
+// ~/.pro/oauth into containers but need to refresh tokens on the host first.
+func ProvidersStoreFromRoot(root string) FileStore {
+	root = strings.TrimSpace(root)
 	if root == "" {
 		return FileStore{}
 	}
@@ -168,6 +184,54 @@ func (s FileStore) Has(key string) bool {
 	}
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// RefreshKnownProviderCredentials refreshes expiring built-in provider tokens
+// in store. This is intentionally in oauthx so provider endpoint details stay
+// with the login/token-source implementations instead of leaking into callers.
+func RefreshKnownProviderCredentials(ctx context.Context, store FileStore) error {
+	if store.Dir == "" {
+		return nil
+	}
+	providerRefreshMu.Lock()
+	defer providerRefreshMu.Unlock()
+	for _, cfg := range []Config{
+		AnthropicConfig("anthropic-oauth"),
+		AnthropicConfig("anthropic"),
+		AnthropicConfig("claude-code"),
+		CodexConfig("openai-codex"),
+	} {
+		if err := refreshProviderCredential(ctx, store, cfg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ProviderAccessToken returns a usable access token for the first provider key
+// present in store, refreshing and persisting it first when it is close to
+// expiry. Missing keys are skipped.
+func ProviderAccessToken(ctx context.Context, store FileStore, keys ...string) (string, error) {
+	for _, key := range keys {
+		cfg := ConfigForProviderID(key)
+		if strings.TrimSpace(cfg.ProviderID) == "" {
+			cfg = Config{ProviderID: key, CacheKey: key}
+		}
+		creds, err := loadFreshProviderCredentials(ctx, store, cfg)
+		if err == nil && creds.AccessToken != "" {
+			return creds.AccessToken, nil
+		}
+		if err != nil && !os.IsNotExist(err) {
+			return "", err
+		}
+	}
+	return "", nil
+}
+
+// ClaudeCodeOAuthToken adapts a stored Anthropic OAuth provider token into the
+// CLAUDE_CODE_OAUTH_TOKEN value accepted by Claude Code for scripts/CI.
+func ClaudeCodeOAuthToken(ctx context.Context, store FileStore) (string, error) {
+	return ProviderAccessToken(ctx, store, "claude-code", "anthropic-oauth", "anthropic")
 }
 
 // LoginOptions tunes the interactive login flow. OnAuthURL, when set,
@@ -354,6 +418,76 @@ func (s *persistingTokenSource) Token() (*oauth2.Token, error) {
 		_ = ProvidersStore().Save(s.key, CredentialsFromToken(token))
 	}
 	return token, err
+}
+
+func ConfigForProviderID(key string) Config {
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "anthropic-oauth", "anthropic", "claude-code":
+		return AnthropicConfig(key)
+	case "openai-codex":
+		return CodexConfig(key)
+	default:
+		return Config{}
+	}
+}
+
+func refreshProviderCredential(ctx context.Context, store FileStore, cfg Config) error {
+	_, err := loadFreshProviderCredentials(ctx, store, cfg)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+func loadFreshProviderCredentials(ctx context.Context, store FileStore, cfg Config) (Credentials, error) {
+	key := cfg.Key()
+	creds, err := store.Load(key)
+	if err != nil {
+		return Credentials{}, err
+	}
+	if creds.RefreshToken == "" || !credentialsNeedRefresh(creds) {
+		return creds, nil
+	}
+	refreshed, err := refreshProviderCredentials(ctx, cfg, creds)
+	if err != nil {
+		return Credentials{}, err
+	}
+	if refreshed.RefreshToken == "" {
+		refreshed.RefreshToken = creds.RefreshToken
+	}
+	if refreshed.AccountID == "" {
+		refreshed.AccountID = creds.AccountID
+	}
+	if err := store.Save(key, refreshed); err != nil {
+		return Credentials{}, err
+	}
+	return refreshed, nil
+}
+
+func credentialsNeedRefresh(creds Credentials) bool {
+	return !creds.Expiry.IsZero() && time.Until(creds.Expiry) <= 30*time.Minute
+}
+
+func refreshProviderCredentials(ctx context.Context, cfg Config, creds Credentials) (Credentials, error) {
+	if strings.EqualFold(cfg.ProviderID, "anthropic") || strings.EqualFold(cfg.Type, "anthropic") {
+		return anthropicExchange(ctx, cfg, map[string]any{
+			"grant_type":    "refresh_token",
+			"client_id":     cfg.ClientID,
+			"refresh_token": creds.RefreshToken,
+		})
+	}
+	if strings.EqualFold(cfg.ProviderID, "openai-codex") || strings.EqualFold(cfg.CacheKey, "openai-codex") {
+		return refreshCodexCredentials(ctx, cfg, creds.RefreshToken)
+	}
+	source, err := TokenSource(ctx, cfg)
+	if err != nil || source == nil {
+		return Credentials{}, err
+	}
+	token, err := source.Token()
+	if err != nil {
+		return Credentials{}, err
+	}
+	return CredentialsFromToken(token), nil
 }
 
 type callbackServer struct {
@@ -605,6 +739,52 @@ func anthropicExchange(ctx context.Context, cfg Config, payload map[string]any) 
 		expiry = time.Time{}
 	}
 	return Credentials{AccessToken: out.AccessToken, RefreshToken: out.RefreshToken, TokenType: firstNonEmpty(out.TokenType, "Bearer"), Expiry: expiry}, nil
+}
+
+func refreshCodexCredentials(ctx context.Context, cfg Config, refreshToken string) (Credentials, error) {
+	form := url.Values{}
+	form.Set("grant_type", "refresh_token")
+	form.Set("refresh_token", refreshToken)
+	form.Set("client_id", cfg.ClientID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cfg.TokenURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return Credentials{}, err
+	}
+	req.Header.Set("content-type", "application/x-www-form-urlencoded")
+	req.Header.Set("accept", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return Credentials{}, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return Credentials{}, fmt.Errorf("codex token refresh failed: status=%d body=%s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	var out struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		TokenType    string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil {
+		return Credentials{}, err
+	}
+	if out.AccessToken == "" {
+		return Credentials{}, fmt.Errorf("codex token response missing access_token")
+	}
+	expiry := time.Time{}
+	if out.ExpiresIn > 0 {
+		expiry = time.Now().Add(time.Duration(out.ExpiresIn) * time.Second)
+	}
+	return Credentials{
+		AccessToken:  out.AccessToken,
+		RefreshToken: out.RefreshToken,
+		TokenType:    firstNonEmpty(out.TokenType, "Bearer"),
+		Expiry:       expiry,
+		AccountID:    AccountIDFromJWT(out.AccessToken, "https://api.openai.com/auth"),
+	}, nil
 }
 
 func AuthorizationHeader(ctx context.Context, cfg Config) (string, error) {

@@ -19,6 +19,20 @@ func findDefaultModel(t *testing.T, id string) ModelConfig {
 	return ModelConfig{}
 }
 
+func TestDefaultModelsIncludeAnthropicClaudeOpus48Variants(t *testing.T) {
+	ids := []string{
+		"anthropic-oauth/claude-opus-4-8",
+		"anthropic-oauth/claude-opus-4-8-none",
+		"anthropic-oauth/claude-opus-4-8-low",
+		"anthropic-oauth/claude-opus-4-8-medium",
+		"anthropic-oauth/claude-opus-4-8-high",
+		"anthropic-oauth/claude-opus-4-8-xhigh",
+	}
+	for _, id := range ids {
+		findDefaultModel(t, id)
+	}
+}
+
 type registryTestClient struct{}
 
 func (c *registryTestClient) CreateCompletion(ctx context.Context, messages []Message, params InferenceParams) (*Message, error) {

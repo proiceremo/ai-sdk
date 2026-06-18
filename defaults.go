@@ -2,6 +2,8 @@ package llm
 
 import (
 	"os"
+
+	"github.com/proiceremo/ai-sdk/oauthx"
 )
 
 var (
@@ -736,6 +738,173 @@ var (
 			ID:               "anthropic-oauth/claude-opus-4-7-xhigh",
 			ModelID:          "claude-opus-4-7",
 			Name:             "Claude 4.7 Opus (Thinking: XHigh) (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: true,
+					Level:   ThinkingLevelXHigh,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: true,
+					Level:   ThinkingLevelXHigh,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8-none",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (Thinking: None) (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: false,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8-low",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (Thinking: Low) (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: true,
+					Level:   ThinkingLevelLow,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8-medium",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (Thinking: Medium) (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: true,
+					Level:   ThinkingLevelMedium,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8-high",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (Thinking: High) (OAuth)",
+			ContextWindow:    1000000,
+			InputModalities:  textAndImage,
+			OutputModalities: textOnly,
+			Costs: &ModelCosts{
+				ModelPricing: ModelPricing{
+					InputTokensPer1M:         5,
+					OutputTokensPer1M:        25,
+					CacheWriteTokensPer1M:    6.25,
+					CacheReadTokensPer1M:     0.5,
+					InputCostByModality:      nil,
+					OutputCostByModality:     nil,
+					CacheReadCostByModality:  nil,
+					CacheWriteCostByModality: nil,
+				},
+			},
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(128000),
+				Thinking: &ThinkingParams{
+					Enabled: true,
+					Level:   ThinkingLevelHigh,
+				},
+			},
+		},
+		{
+			ProviderID:       "anthropic-oauth",
+			ID:               "anthropic-oauth/claude-opus-4-8-xhigh",
+			ModelID:          "claude-opus-4-8",
+			Name:             "Claude 4.8 Opus (Thinking: XHigh) (OAuth)",
 			ContextWindow:    1000000,
 			InputModalities:  textAndImage,
 			OutputModalities: textOnly,
@@ -3116,16 +3285,7 @@ var (
 			ID:      "anthropic-oauth",
 			Format:  APIFormatAnthropic,
 			BaseURL: "https://api.anthropic.com",
-			Auth: OAuthConfig{
-				Type:        "anthropic",
-				ProviderID:  "anthropic",
-				AuthURL:     "https://claude.ai/oauth/authorize",
-				TokenURL:    "https://platform.claude.com/v1/oauth/token",
-				ClientID:    "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
-				Scopes:      []string{"org:create_api_key", "user:profile", "user:inference", "user:sessions:claude_code", "user:mcp_servers", "user:file_upload"},
-				RedirectURL: "http://localhost:53692/callback",
-				CacheKey:    "anthropic-oauth",
-			},
+			Auth:    oauthConfigFromOAuthX(oauthx.AnthropicConfig("anthropic-oauth")),
 		},
 		{
 			ID:                 "openai",
@@ -3137,21 +3297,7 @@ var (
 			ID:      "openai-codex",
 			Format:  APIFormatOpenAICodex,
 			BaseURL: "https://chatgpt.com/backend-api",
-			Auth: OAuthConfig{
-				Type:        "authorization_code",
-				ProviderID:  "openai-codex",
-				AuthURL:     "https://auth.openai.com/oauth/authorize",
-				TokenURL:    "https://auth.openai.com/oauth/token",
-				ClientID:    "app_EMoamEEZ73f0CkXaXp7hrann",
-				Scopes:      []string{"openid", "profile", "email", "offline_access"},
-				RedirectURL: "http://localhost:1455/auth/callback",
-				CacheKey:    "openai-codex",
-				AuthParams: map[string]string{
-					"id_token_add_organizations": "true",
-					"codex_cli_simplified_flow":  "true",
-					"originator":                 "proagent",
-				},
-			},
+			Auth:    oauthConfigFromOAuthX(oauthx.CodexConfig("openai-codex")),
 		},
 		{
 			ID:      "zenmux-anthropic",
@@ -3335,6 +3481,32 @@ var (
 
 	GlobalRegistry = DefaultRegistry()
 )
+
+func oauthConfigFromOAuthX(cfg oauthx.Config) OAuthConfig {
+	return OAuthConfig{
+		Type:         cfg.Type,
+		ProviderID:   cfg.ProviderID,
+		TokenURL:     cfg.TokenURL,
+		AuthURL:      cfg.AuthURL,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Scopes:       append([]string(nil), cfg.Scopes...),
+		RedirectURL:  cfg.RedirectURL,
+		CacheKey:     cfg.CacheKey,
+		AuthParams:   cloneOAuthParams(cfg.AuthParams),
+	}
+}
+
+func cloneOAuthParams(params map[string]string) map[string]string {
+	if len(params) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(params))
+	for key, value := range params {
+		out[key] = value
+	}
+	return out
+}
 
 func DefaultRegistry() *Registry {
 	return NewRegistry().
