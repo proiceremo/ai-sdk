@@ -84,6 +84,7 @@ type googleFunctionDeclaration struct {
 	Description          *string `json:"description,omitempty"`
 	Name                 *string `json:"name,omitempty"`
 	ParametersJsonSchema any     `json:"parametersJsonSchema,omitempty"`
+	Parameters           any     `json:"parameters,omitempty"`
 }
 
 type googleToolConfig struct {

@@ -413,7 +413,7 @@ func TestAnthropicFromAnthropicMessagePreservesServerToolBlocks(t *testing.T) {
 				"web_fetch_requests": 1,
 			},
 		},
-	})
+	}, nil)
 
 	if message == nil {
 		t.Fatal("expected message")

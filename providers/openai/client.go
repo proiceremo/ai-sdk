@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	. "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/oauthx"
 	"github.com/proiceremo/ai-sdk/providers/internal/httpx"
 	"golang.org/x/oauth2"
 )
@@ -283,7 +285,7 @@ func (c *OpenAIClient) toOpenAIMessages(messages []Message, systemPrompt string)
 	if systemPrompt != "" {
 		result = append(result, openAIChatCompletionRequestMessage{
 			Role:    "system",
-			Content: systemPrompt,
+			Content: SanitizeSurrogates(systemPrompt),
 		})
 	}
 
@@ -392,6 +394,7 @@ func (c *OpenAIClient) toOpenAIToolMessages(content MessageContent) ([]openAICha
 		if outputText == "" {
 			outputText = strings.TrimSpace(block.ToolOutput.Output.ToString())
 		}
+		outputText = SanitizeSurrogates(outputText)
 
 		result = append(result, openAIChatCompletionRequestMessage{
 			Role:       "tool",
@@ -473,10 +476,11 @@ func (c *OpenAIClient) toOpenAIUserContent(content MessageContent) (any, error) 
 		switch block.Type {
 		case ContentBlockTypeText:
 			if block.Text != "" {
-				textOnly.WriteString(block.Text)
+				sanitized := SanitizeSurrogates(block.Text)
+				textOnly.WriteString(sanitized)
 				parts = append(parts, openAIChatCompletionTextPart{
 					Type: "text",
-					Text: block.Text,
+					Text: sanitized,
 				})
 			}
 		case ContentBlockTypeImage:
@@ -627,9 +631,9 @@ func (c *OpenAIClient) toOpenAIAssistantMessage(content MessageContent) (openAIC
 	for _, block := range content {
 		switch block.Type {
 		case ContentBlockTypeText:
-			text.WriteString(block.Text)
+			text.WriteString(SanitizeSurrogates(block.Text))
 		case ContentBlockTypeThinking:
-			reasoning.WriteString(block.Thinking)
+			reasoning.WriteString(SanitizeSurrogates(block.Thinking))
 		case ContentBlockTypeToolUse:
 			if block.ToolUse == nil {
 				return openAIChatCompletionRequestMessage{}, fmt.Errorf("assistant tool use content is missing payload")
@@ -1280,4 +1284,46 @@ func float64SliceToFloat32(values []float64) []float32 {
 		result[i] = float32(value)
 	}
 	return result
+}
+
+func init() {
+	RegisterProviderFactory(APIFormatOpenAI, func(ctx context.Context, cfg ProviderConfig) (Client, error) {
+		apiKey := os.Getenv(cfg.EnvKey)
+		if apiKey == "" {
+			apiKey = os.Getenv("OPENAI_API_KEY")
+		}
+
+		var tokenSource oauth2.TokenSource
+		if cfg.Auth.Type != "" && cfg.Auth.Type != "none" {
+			oauthCfg := oauthx.Config{
+				Type:         cfg.Auth.Type,
+				ProviderID:   cfg.Auth.ProviderID,
+				TokenURL:     cfg.Auth.TokenURL,
+				AuthURL:      cfg.Auth.AuthURL,
+				ClientID:     cfg.Auth.ClientID,
+				ClientSecret: cfg.Auth.ClientSecret,
+				Scopes:       cfg.Auth.Scopes,
+				RedirectURL:  cfg.Auth.RedirectURL,
+				CacheKey:     cfg.Auth.CacheKey,
+				AuthParams:   cfg.Auth.AuthParams,
+			}
+			var err error
+			tokenSource, err = oauthx.TokenSource(ctx, oauthCfg)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		client := NewOpenAIClientWithOptions(
+			WithAPIKey(apiKey),
+			WithBaseURL(cfg.BaseURL),
+		)
+		client.tokenSource = tokenSource
+		for k, v := range cfg.Options {
+			if strings.HasPrefix(strings.ToLower(k), "header.") {
+				client.headers[strings.TrimPrefix(k, "header.")] = v
+			}
+		}
+		return client, nil
+	})
 }

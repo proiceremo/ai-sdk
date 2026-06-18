@@ -269,7 +269,7 @@ func (c *GoogleClient) toGoogleEmbeddingParts(contentBlocks []ContentBlock) ([]g
 	for _, content := range contentBlocks {
 		switch content.Type {
 		case ContentBlockTypeText:
-			text := content.Text
+			text := SanitizeSurrogates(content.Text)
 			parts = append(parts, googlePart{Text: &text})
 		case ContentBlockTypeImage:
 			part, err := googlePartFromImage(content.Image)
@@ -366,7 +366,7 @@ func (c *GoogleClient) CreateCompletionStream(ctx context.Context, messages []Me
 }
 
 func (c *GoogleClient) buildCompletionRequest(messages []Message, params InferenceParams) (*googleGenerateContentParameters, error) {
-	googleMessages, err := c.toGoogleMessages(messages)
+	googleMessages, err := c.toGoogleMessages(messages, params.Model)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +384,7 @@ func (c *GoogleClient) buildCompletionRequest(messages []Message, params Inferen
 		request.GenerationConfig.TopK = &topK
 	}
 	if params.SystemPrompt != "" {
-		systemText := params.SystemPrompt
+		systemText := SanitizeSurrogates(params.SystemPrompt)
 		request.SystemInstruction = &googleContent{
 			Parts: []googlePart{{Text: &systemText}},
 		}
@@ -398,11 +398,16 @@ func (c *GoogleClient) buildCompletionRequest(messages []Message, params Inferen
 		functions := make([]googleFunctionDeclaration, 0, len(params.Tools))
 		for _, tool := range params.Tools {
 			schema := tool.Schema()
-			functions = append(functions, googleFunctionDeclaration{
-				Name:                 &schema.Name,
-				Description:          &schema.Description,
-				ParametersJsonSchema: schema.InputSchema,
-			})
+			decl := googleFunctionDeclaration{
+				Name:        &schema.Name,
+				Description: &schema.Description,
+			}
+			if c.vertex {
+				decl.Parameters = sanitizeForOpenApi(schema.InputSchema)
+			} else {
+				decl.ParametersJsonSchema = schema.InputSchema
+			}
+			functions = append(functions, decl)
 		}
 		request.Tools = append(request.Tools, googleTool{FunctionDeclarations: functions})
 		if params.ToolChoice != nil {
@@ -482,7 +487,8 @@ func googlePartFromDocument(source *DocumentSource) (*googlePart, error) {
 		if text == "" {
 			text = source.Text
 		}
-		return &googlePart{Text: &text}, nil
+		sanitizedText := SanitizeSurrogates(text)
+		return &googlePart{Text: &sanitizedText}, nil
 	case DocumentSourceTypeURL:
 		return &googlePart{FileData: &googleFileData{
 			FileURI:  &source.URL,
@@ -499,10 +505,10 @@ func googlePartFromDocument(source *DocumentSource) (*googlePart, error) {
 	}
 }
 
-func (c *GoogleClient) toGoogleMessages(messages []Message) ([]googleContent, error) {
+func (c *GoogleClient) toGoogleMessages(messages []Message, modelId string) ([]googleContent, error) {
 	googleMessages := make([]googleContent, 0, len(messages))
 	for _, message := range messages {
-		parts, err := c.toGoogleParts(message.Content)
+		parts, err := c.toGoogleParts(message.Content, modelId)
 		if err != nil {
 			return nil, err
 		}
@@ -521,29 +527,30 @@ func (c *GoogleClient) toGoogleMessages(messages []Message) ([]googleContent, er
 	return googleMessages, nil
 }
 
-func (c *GoogleClient) toGoogleParts(contentBlocks []ContentBlock) ([]googlePart, error) {
+func (c *GoogleClient) toGoogleParts(contentBlocks []ContentBlock, modelId string) ([]googlePart, error) {
 	parts := make([]googlePart, 0, len(contentBlocks))
 	for _, content := range contentBlocks {
 		switch content.Type {
 		case ContentBlockTypeThinking:
 			part := googlePart{
 				Thought: ptrBool(true),
-				Text:    stringPtr(content.Thinking),
+				Text:    stringPtr(SanitizeSurrogates(content.Thinking)),
 			}
 			if content.Signature != "" {
 				part.ThoughtSignature = &content.Signature
 			}
 			parts = append(parts, part)
 		case ContentBlockTypeText:
-			parts = append(parts, googlePart{Text: &content.Text})
+			text := SanitizeSurrogates(content.Text)
+			parts = append(parts, googlePart{Text: &text})
 		case ContentBlockTypeToolResult:
-			part, err := googleFunctionResponseFromToolOutput(content.ToolOutput)
+			part, err := googleFunctionResponseFromToolOutput(content.ToolOutput, modelId)
 			if err != nil {
 				return nil, err
 			}
 			parts = append(parts, *part)
 		case ContentBlockTypeToolUse:
-			part, err := googleFunctionCallPart(content.ToolUse)
+			part, err := googleFunctionCallPart(content.ToolUse, modelId)
 			if err != nil {
 				return nil, err
 			}
@@ -579,43 +586,51 @@ func (c *GoogleClient) toGoogleParts(contentBlocks []ContentBlock) ([]googlePart
 	return parts, nil
 }
 
-func googleFunctionResponseFromToolOutput(output *ToolOutput) (*googlePart, error) {
+func googleFunctionResponseFromToolOutput(output *ToolOutput, modelId string) (*googlePart, error) {
 	if output == nil {
 		return nil, fmt.Errorf("tool result content is missing payload")
 	}
 
-	responseMap := map[string]any{}
-	responseParts := make([]googleFunctionResponsePart, 0, len(output.Output))
+	var textParts []string
+	var responseParts []googleFunctionResponsePart
 
-	for index, part := range output.Output {
-		key := fmt.Sprintf("part-%d", index)
+	for _, part := range output.Output {
 		switch part.Type {
 		case ContentBlockTypeText:
-			responseMap[key] = part.Text
+			textParts = append(textParts, SanitizeSurrogates(part.Text))
 		case ContentBlockTypeThinking:
-			responseMap[key] = part.Thinking
+			textParts = append(textParts, SanitizeSurrogates(part.Thinking))
 		case ContentBlockTypeDocument:
 			if docText := strings.TrimSpace(googleDocumentText(part.Document)); docText != "" {
-				responseMap[key] = docText
+				textParts = append(textParts, SanitizeSurrogates(docText))
 			}
 			functionPart, err := googleFunctionResponsePartFromContentBlock(part)
-			if err != nil {
-				return nil, err
+			if err == nil && functionPart != nil {
+				responseParts = append(responseParts, *functionPart)
 			}
-			if functionPart != nil {
+		case ContentBlockTypeImage, ContentBlockTypeVideo, ContentBlockTypeAudio:
+			functionPart, err := googleFunctionResponsePartFromContentBlock(part)
+			if err == nil && functionPart != nil {
 				responseParts = append(responseParts, *functionPart)
 			}
 		default:
-			functionPart, err := googleFunctionResponsePartFromContentBlock(part)
-			if err != nil {
-				return nil, err
+			fallback := googleContentBlockFallbackText(part)
+			if fallback != "" {
+				textParts = append(textParts, fallback)
 			}
-			if functionPart != nil {
-				responseParts = append(responseParts, *functionPart)
-				continue
-			}
-			responseMap[key] = googleContentBlockFallbackText(part)
 		}
+	}
+
+	textResult := strings.Join(textParts, "\n")
+	hasImages := len(responseParts) > 0
+
+	var responseValue any
+	if textResult != "" {
+		responseValue = textResult
+	} else if hasImages {
+		responseValue = "(see attached image)"
+	} else {
+		responseValue = ""
 	}
 
 	key := "output"
@@ -623,18 +638,15 @@ func googleFunctionResponseFromToolOutput(output *ToolOutput) (*googlePart, erro
 		key = "error"
 	}
 
-	// Get the function name - try output.Name first, then extract from tool use ID
 	funcName := output.Name
 	if funcName == "" && output.ToolUseID != "" {
-		// Try to extract function name from context if available
-		// The ToolUseID should correspond to a previous function call
 		funcName = "unknown_function"
 	}
 
 	functionResponse := &googleFunctionResponse{
-		ID:       stringPtr(output.ToolUseID),
+		ID:       stringPtr(normalizeToolCallId(output.ToolUseID, modelId)),
 		Name:     stringPtr(funcName),
-		Response: map[string]any{key: normalizeGoogleToolResponsePayload(responseMap)},
+		Response: map[string]any{key: responseValue},
 	}
 	if len(responseParts) > 0 {
 		functionResponse.Parts = responseParts
@@ -643,12 +655,12 @@ func googleFunctionResponseFromToolOutput(output *ToolOutput) (*googlePart, erro
 	return &googlePart{FunctionResponse: functionResponse}, nil
 }
 
-func googleFunctionCallPart(toolUse *ToolUse) (*googlePart, error) {
+func googleFunctionCallPart(toolUse *ToolUse, modelId string) (*googlePart, error) {
 	if toolUse == nil {
 		return nil, fmt.Errorf("tool use content is missing payload")
 	}
 	call := &googleFunctionCall{
-		ID:   stringPtr(toolUse.ID),
+		ID:   stringPtr(normalizeToolCallId(toolUse.ID, modelId)),
 		Name: stringPtr(toolUse.Name),
 	}
 	if len(toolUse.Input) > 0 {
@@ -1252,4 +1264,78 @@ func stringValue(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+func requiresToolCallId(modelId string) bool {
+	return strings.HasPrefix(modelId, "claude-") || strings.HasPrefix(modelId, "gpt-oss-")
+}
+
+func normalizeToolCallId(id string, modelId string) string {
+	if !requiresToolCallId(modelId) {
+		return id
+	}
+	var sb strings.Builder
+	for _, r := range id {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
+			sb.WriteRune(r)
+		} else {
+			sb.WriteRune('_')
+		}
+	}
+	normalized := sb.String()
+	if len(normalized) > 64 {
+		normalized = normalized[:64]
+	}
+	return normalized
+}
+
+func sanitizeForOpenApi(schema any) any {
+	switch val := schema.(type) {
+	case map[string]any:
+		result := make(map[string]any)
+		for k, v := range val {
+			switch k {
+			case "$schema", "$id", "$anchor", "$dynamicAnchor", "$vocabulary", "$comment", "$defs", "definitions":
+				continue
+			}
+			result[k] = sanitizeForOpenApi(v)
+		}
+		return result
+	case []any:
+		result := make([]any, len(val))
+		for i, v := range val {
+			result[i] = sanitizeForOpenApi(v)
+		}
+		return result
+	default:
+		return schema
+	}
+}
+
+func init() {
+	RegisterProviderFactory(APIFormatGoogle, func(ctx context.Context, cfg ProviderConfig) (Client, error) {
+		apiKey := os.Getenv(cfg.EnvKey)
+		if apiKey == "" {
+			apiKey = os.Getenv("GEMINI_API_KEY")
+		}
+		if apiKey == "" {
+			apiKey = os.Getenv("GOOGLE_API_KEY")
+		}
+
+		if cfg.Options["project"] != "" || cfg.Options["location"] != "" {
+			opts := VertexGoogleClientOptions{
+				BaseURL:    cfg.BaseURL,
+				APIVersion: cfg.Options["api_version"],
+			}
+			if cfg.Auth.Type == "service_account" {
+				if cfg.Auth.ClientSecret != "" {
+					opts.CredentialsJSON = []byte(cfg.Auth.ClientSecret)
+				}
+			}
+			return NewVertexGoogleClientWithOptions(ctx, cfg.Options["project"], cfg.Options["location"], opts)
+		}
+
+		client := newGoogleClient(apiKey, cfg.BaseURL, cfg.Options["api_version"], "", "", false, nil)
+		return client, nil
+	})
 }

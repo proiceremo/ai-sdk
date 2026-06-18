@@ -1,6 +1,10 @@
 package llm
 
-import "path/filepath"
+import (
+	"path/filepath"
+	"strings"
+	"unicode/utf8"
+)
 
 func varString(ctx ToolContext, key string) string {
 	if ctx.Vars == nil {
@@ -48,3 +52,24 @@ func safePathPart(value string) string {
 	}
 	return string(b)
 }
+
+// SanitizeSurrogates removes unpaired Unicode surrogate characters and invalid UTF-8 bytes from a string.
+func SanitizeSurrogates(s string) string {
+	var sb strings.Builder
+	sb.Grow(len(s))
+	for i, w := 0, 0; i < len(s); i += w {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		w = size
+		if r == utf8.RuneError && size == 1 {
+			// Invalid UTF-8 byte, skip it
+			continue
+		}
+		if r >= 0xD800 && r <= 0xDFFF {
+			// Unpaired surrogate code point, skip it
+			continue
+		}
+		sb.WriteRune(r)
+	}
+	return sb.String()
+}
+

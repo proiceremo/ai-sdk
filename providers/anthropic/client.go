@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	. "github.com/proiceremo/ai-sdk"
+	"github.com/proiceremo/ai-sdk/oauthx"
 	"github.com/proiceremo/ai-sdk/providers/internal/httpx"
 	"golang.org/x/oauth2"
 )
@@ -76,7 +78,7 @@ func (c *AnthropicClient) CreateCompletion(ctx context.Context, messages []Messa
 	if err := httpx.DoJSON(ctx, c.client, http.MethodPost, c.baseURL+"/v1/messages", headers, request, &response); err != nil {
 		return nil, err
 	}
-	return c.fromAnthropicMessage(&response), nil
+	return c.fromAnthropicMessage(&response, params.Tools), nil
 }
 
 func (c *AnthropicClient) CreateCompletionStream(ctx context.Context, messages []Message, params InferenceParams) (Stream, error) {
@@ -100,14 +102,18 @@ func (c *AnthropicClient) CreateCompletionStream(ctx context.Context, messages [
 	return &anthropicStream{
 		BaseStream: NewBaseStream(),
 		stream:     stream,
+		isOAuth:    c.tokenSource != nil,
+		tools:      params.Tools,
 	}, nil
 }
 
 type anthropicStream struct {
 	*BaseStream
-	stream *httpx.SSEStream
-	usage  *Usage
-	err    error
+	stream  *httpx.SSEStream
+	usage   *Usage
+	err     error
+	isOAuth bool
+	tools   []Tool
 }
 
 func (s *anthropicStream) Recv(ctx context.Context) (*StreamEvent, error) {
@@ -166,7 +172,7 @@ func (s *anthropicStream) processEvent(event anthropicStreamEvent) error {
 			}
 		}
 	case "content_block_start":
-		block, err := anthropicContentBlockToContentBlock(event.ContentBlock)
+		block, err := anthropicContentBlockToContentBlock(event.ContentBlock, s.isOAuth, s.tools)
 		if err != nil {
 			return err
 		}
@@ -308,8 +314,12 @@ func (c *AnthropicClient) buildCompletionRequest(messages []Message, params Infe
 				inputSchema = schema.InputSchema
 			}
 
+			name := schema.Name
+			if useOAuth {
+				name = toClaudeCodeName(name)
+			}
 			toolDefinition := map[string]any{
-				"name":         schema.Name,
+				"name":         name,
 				"description":  schema.Description,
 				"input_schema": inputSchema,
 			}
@@ -404,11 +414,12 @@ func anthropicThinkingBudget(thinking ThinkingParams, maxTokens int) int {
 
 func (c *AnthropicClient) toAnthropicMessages(messages []Message, isNative bool) ([]anthropicMessageParam, error) {
 	params := make([]anthropicMessageParam, 0, len(messages))
+	isOAuth := c.tokenSource != nil
 
 	for _, msg := range messages {
 		content := make([]anthropicInputContentBlock, 0, len(msg.Content))
 		for _, block := range msg.Content {
-			converted, err := anthropicContentBlockFromContentBlock(block, isNative)
+			converted, err := anthropicContentBlockFromContentBlock(block, isNative, isOAuth)
 			if err != nil {
 				return nil, err
 			}
@@ -433,13 +444,13 @@ func (c *AnthropicClient) toAnthropicMessages(messages []Message, isNative bool)
 	return params, nil
 }
 
-func anthropicContentBlockFromContentBlock(block ContentBlock, isNative bool) (*anthropicInputContentBlock, error) {
+func anthropicContentBlockFromContentBlock(block ContentBlock, isNative bool, isOAuth bool) (*anthropicInputContentBlock, error) {
 	switch block.Type {
 	case ContentBlockTypeText:
 		if block.Text == "" {
 			return nil, nil
 		}
-		return &anthropicInputContentBlock{Type: "text", Text: block.Text}, nil
+		return &anthropicInputContentBlock{Type: "text", Text: SanitizeSurrogates(block.Text)}, nil
 	case ContentBlockTypeImage:
 		if block.Image == nil {
 			return nil, nil
@@ -464,7 +475,7 @@ func anthropicContentBlockFromContentBlock(block ContentBlock, isNative bool) (*
 			if text == "" {
 				return nil, nil
 			}
-			return &anthropicInputContentBlock{Type: "text", Text: text}, nil
+			return &anthropicInputContentBlock{Type: "text", Text: SanitizeSurrogates(text)}, nil
 		}
 		source, err := anthropicDocumentSource(block.Document)
 		if err != nil {
@@ -488,10 +499,14 @@ func anthropicContentBlockFromContentBlock(block ContentBlock, isNative bool) (*
 		if block.ToolUse.Execution == ToolExecutionModeServer {
 			toolType = firstNonEmpty(strings.TrimSpace(block.ToolUse.ProviderType), "server_tool_use")
 		}
+		name := block.ToolUse.Name
+		if isOAuth {
+			name = toClaudeCodeName(name)
+		}
 		return &anthropicInputContentBlock{
 			Type:  toolType,
 			ID:    block.ToolUse.ID,
-			Name:  block.ToolUse.Name,
+			Name:  name,
 			Input: input,
 		}, nil
 	case ContentBlockTypeToolResult:
@@ -614,7 +629,7 @@ func anthropicDocumentSource(document *DocumentSource) (any, error) {
 		return anthropicPlainTextSource{
 			Type:      "text",
 			MediaType: mediaType,
-			Data:      document.Text,
+			Data:      SanitizeSurrogates(document.Text),
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported document source type %q", document.Type)
@@ -626,7 +641,7 @@ func anthropicToolResultContent(output MessageContent, isNative bool) (any, erro
 	for _, outputBlock := range output {
 		switch outputBlock.Type {
 		case ContentBlockTypeText, ContentBlockTypeImage, ContentBlockTypeDocument:
-			converted, err := anthropicContentBlockFromContentBlock(outputBlock, isNative)
+			converted, err := anthropicContentBlockFromContentBlock(outputBlock, isNative, false)
 			if err != nil {
 				return nil, err
 			}
@@ -713,13 +728,14 @@ func anthropicProviderDataToAny(value json.RawMessage) (any, error) {
 	return decoded, nil
 }
 
-func (c *AnthropicClient) fromAnthropicMessage(response *anthropicMessage) *Message {
+func (c *AnthropicClient) fromAnthropicMessage(response *anthropicMessage, tools []Tool) *Message {
 	if response == nil {
 		return nil
 	}
+	isOAuth := c.tokenSource != nil
 	content := make([]ContentBlock, 0, len(response.Content))
 	for _, block := range response.Content {
-		converted, err := anthropicContentBlockToContentBlock(&block)
+		converted, err := anthropicContentBlockToContentBlock(&block, isOAuth, tools)
 		if err != nil {
 			continue
 		}
@@ -737,7 +753,7 @@ func (c *AnthropicClient) fromAnthropicMessage(response *anthropicMessage) *Mess
 	}
 }
 
-func anthropicContentBlockToContentBlock(block *anthropicContentBlock) (*ContentBlock, error) {
+func anthropicContentBlockToContentBlock(block *anthropicContentBlock, isOAuth bool, tools []Tool) (*ContentBlock, error) {
 	if block == nil {
 		return nil, nil
 	}
@@ -746,7 +762,11 @@ func anthropicContentBlockToContentBlock(block *anthropicContentBlock) (*Content
 		content := NewTextContentBlock(block.Text)
 		return &content, nil
 	case "tool_use":
-		content := NewToolUseContentBlock(block.ID, block.Name, block.Input, nil)
+		name := block.Name
+		if isOAuth {
+			name = fromClaudeCodeName(name, tools)
+		}
+		content := NewToolUseContentBlock(block.ID, name, block.Input, nil)
 		return &content, nil
 	case "server_tool_use":
 		content := NewToolUseContentBlock(block.ID, block.Name, block.Input, nil)
@@ -1020,13 +1040,14 @@ const claudeCodeIdentityPrompt = "You are Claude Code, Anthropic's official CLI 
 // agent prompt.
 func buildSystemBlocks(userPrompt string, useOAuth bool, ttl string) []anthropicTextBlock {
 	userPrompt = strings.TrimSpace(userPrompt)
+	sanitizedUserPrompt := SanitizeSurrogates(userPrompt)
 	if !useOAuth {
-		if userPrompt == "" {
+		if sanitizedUserPrompt == "" {
 			return nil
 		}
 		return []anthropicTextBlock{{
 			Type:         "text",
-			Text:         userPrompt,
+			Text:         sanitizedUserPrompt,
 			CacheControl: ephemeralCache(ttl),
 		}}
 	}
@@ -1034,10 +1055,10 @@ func buildSystemBlocks(userPrompt string, useOAuth bool, ttl string) []anthropic
 		Type: "text",
 		Text: claudeCodeIdentityPrompt,
 	}}
-	if userPrompt != "" {
+	if sanitizedUserPrompt != "" {
 		blocks = append(blocks, anthropicTextBlock{
 			Type: "text",
-			Text: userPrompt,
+			Text: sanitizedUserPrompt,
 		})
 	}
 	// Cache_control on the LAST block — Anthropic caches the prefix UP
@@ -1159,4 +1180,79 @@ func (c *AnthropicClient) requestHeaders(ctx context.Context, request *anthropic
 	}
 	headers["x-api-key"] = c.apiKey
 	return headers, nil
+}
+
+var claudeCodeTools = []string{
+	"Read",
+	"Write",
+	"Edit",
+	"Bash",
+	"Grep",
+	"Glob",
+	"AskUserQuestion",
+	"EnterPlanMode",
+	"ExitPlanMode",
+	"KillShell",
+	"NotebookEdit",
+	"Skill",
+	"Task",
+	"TaskOutput",
+	"TodoWrite",
+	"WebFetch",
+	"WebSearch",
+}
+
+func toClaudeCodeName(name string) string {
+	lower := strings.ToLower(name)
+	for _, t := range claudeCodeTools {
+		if strings.ToLower(t) == lower {
+			return t
+		}
+	}
+	return name
+}
+
+func fromClaudeCodeName(name string, tools []Tool) string {
+	lower := strings.ToLower(name)
+	for _, t := range tools {
+		if strings.ToLower(t.Schema().Name) == lower {
+			return t.Schema().Name
+		}
+	}
+	return name
+}
+
+func init() {
+	RegisterProviderFactory(APIFormatAnthropic, func(ctx context.Context, cfg ProviderConfig) (Client, error) {
+		apiKey := os.Getenv(cfg.EnvKey)
+		if apiKey == "" {
+			apiKey = os.Getenv("ANTHROPIC_API_KEY")
+		}
+
+		var tokenSource oauth2.TokenSource
+		if cfg.Auth.Type != "" && cfg.Auth.Type != "none" {
+			oauthCfg := oauthx.Config{
+				Type:         cfg.Auth.Type,
+				ProviderID:   cfg.Auth.ProviderID,
+				TokenURL:     cfg.Auth.TokenURL,
+				AuthURL:      cfg.Auth.AuthURL,
+				ClientID:     cfg.Auth.ClientID,
+				ClientSecret: cfg.Auth.ClientSecret,
+				Scopes:       cfg.Auth.Scopes,
+				RedirectURL:  cfg.Auth.RedirectURL,
+				CacheKey:     cfg.Auth.CacheKey,
+				AuthParams:   cfg.Auth.AuthParams,
+			}
+			var err error
+			tokenSource, err = oauthx.TokenSource(ctx, oauthCfg)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if tokenSource != nil {
+			return NewAnthropicClientWithTokenSource(ctx, tokenSource, cfg.BaseURL)
+		}
+		return NewAnthropicClient(ctx, apiKey, cfg.BaseURL)
+	})
 }

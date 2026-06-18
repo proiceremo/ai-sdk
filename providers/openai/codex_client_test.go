@@ -215,7 +215,7 @@ func TestResolveCodexServiceTier(t *testing.T) {
 }
 
 func codexUsage(event map[string]any) *llm.Usage {
-	return newCodexStream(nil).codexUsage(event)
+	return newResponsesStream(nil).responsesUsage(event)
 }
 
 

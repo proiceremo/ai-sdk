@@ -110,13 +110,19 @@ var (
 			CacheReadTokensPer1M: 0.075,
 		},
 	}
+	umansPricing = &ModelCosts{
+		ModelPricing: ModelPricing{
+			InputTokensPer1M:  0.0,
+			OutputTokensPer1M: 0.0,
+		},
+	}
 
 	DefaultModels = []ModelConfig{
 		{
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -126,7 +132,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5-none", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5 (Thinking: None)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: false},
@@ -136,7 +142,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5-low", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5 (Thinking: Low)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelLow},
@@ -146,7 +152,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5-medium", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5 (Thinking: Medium)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -156,7 +162,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5-high", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5 (Thinking: High)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelHigh},
@@ -166,7 +172,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.5-xhigh", ModelID: "gpt-5.5", Name: "OpenAI Codex GPT-5.5 (Thinking: XHigh)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt55Pricing,
+			Costs: gpt55Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
@@ -176,7 +182,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -186,7 +192,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-none", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4 (Thinking: None)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: false},
@@ -196,7 +202,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-low", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4 (Thinking: Low)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelLow},
@@ -206,7 +212,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-medium", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4 (Thinking: Medium)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -216,7 +222,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-high", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4 (Thinking: High)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelHigh},
@@ -226,7 +232,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-xhigh", ModelID: "gpt-5.4", Name: "OpenAI Codex GPT-5.4 (Thinking: XHigh)",
 			ContextWindow:   1050000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54Pricing,
+			Costs: gpt54Pricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
@@ -236,7 +242,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -246,7 +252,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini-none", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini (Thinking: None)",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: false},
@@ -256,7 +262,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini-low", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini (Thinking: Low)",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelLow},
@@ -266,7 +272,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini-medium", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini (Thinking: Medium)",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelMedium},
@@ -276,7 +282,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini-high", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini (Thinking: High)",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelHigh},
@@ -286,7 +292,7 @@ var (
 			ProviderID: "openai-codex", ID: "openai-codex/gpt-5.4-mini-xhigh", ModelID: "gpt-5.4-mini", Name: "OpenAI Codex GPT-5.4 Mini (Thinking: XHigh)",
 			ContextWindow:   400000,
 			InputModalities: textAndImage, OutputModalities: textOnly,
-			Costs:           gpt54MiniPricing,
+			Costs: gpt54MiniPricing,
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(128000),
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
@@ -2970,7 +2976,7 @@ var (
 			Costs: &ModelCosts{ModelPricing: ModelPricing{InputTokensPer1M: 0.14, OutputTokensPer1M: 0.28, CacheReadTokensPer1M: 0.028}},
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(384000),
-				Thinking: &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
 		{
@@ -2986,7 +2992,7 @@ var (
 			Costs: &ModelCosts{ModelPricing: ModelPricing{InputTokensPer1M: 1.74, OutputTokensPer1M: 3.48, CacheReadTokensPer1M: 0.145}},
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(65536),
-				Thinking: &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
 		{
@@ -2999,7 +3005,7 @@ var (
 			Costs: &ModelCosts{ModelPricing: ModelPricing{InputTokensPer1M: 1.4, OutputTokensPer1M: 4.4, CacheReadTokensPer1M: 0.26}},
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(16384),
-				Thinking: &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
 		{
@@ -3011,7 +3017,7 @@ var (
 			Costs: &ModelCosts{ModelPricing: ModelPricing{InputTokensPer1M: 0.07, OutputTokensPer1M: 0.34}},
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(32768),
-				Thinking: &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
 		{
@@ -3024,7 +3030,7 @@ var (
 			Costs: &ModelCosts{ModelPricing: ModelPricing{InputTokensPer1M: 0.13, OutputTokensPer1M: 0.38}},
 			RecommendedParams: &InferenceParams{
 				MaxTokens: Ptr(32768),
-				Thinking: &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
 		{
@@ -3247,6 +3253,146 @@ var (
 				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
 			},
 		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-kimi-k2.6", ModelID: "umans-kimi-k2.6", Name: "Umans Kimi K2.6",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-kimi-k2.7", ModelID: "umans-kimi-k2.7", Name: "Umans Kimi K2.7 Code",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-glm-5.1", ModelID: "umans-glm-5.1", Name: "Umans GLM 5.1",
+			ContextWindow:   202752,
+			InputModalities: textOnly, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(131071),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-glm-5.2", ModelID: "umans-glm-5.2", Name: "Umans GLM 5.2",
+			ContextWindow:   405504,
+			InputModalities: textOnly, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(131071),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-coder", ModelID: "umans-coder", Name: "Umans Coder",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-flash", ModelID: "umans-flash", Name: "Umans Flash",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-anthropic", ID: "umans/umans-qwen3.6-35b-a3b", ModelID: "umans-qwen3.6-35b-a3b", Name: "Umans Qwen3.6 35B A3B",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-kimi-k2.6", ModelID: "umans-kimi-k2.6", Name: "Umans Kimi K2.6 (OpenAI)",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-kimi-k2.7", ModelID: "umans-kimi-k2.7", Name: "Umans Kimi K2.7 Code (OpenAI)",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-glm-5.1", ModelID: "umans-glm-5.1", Name: "Umans GLM 5.1 (OpenAI)",
+			ContextWindow:   202752,
+			InputModalities: textOnly, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(131071),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-glm-5.2", ModelID: "umans-glm-5.2", Name: "Umans GLM 5.2 (OpenAI)",
+			ContextWindow:   405504,
+			InputModalities: textOnly, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(131071),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-coder", ModelID: "umans-coder", Name: "Umans Coder (OpenAI)",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-flash", ModelID: "umans-flash", Name: "Umans Flash (OpenAI)",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
+		{
+			ProviderID: "umans-openai", ID: "umans-openai/umans-qwen3.6-35b-a3b", ModelID: "umans-qwen3.6-35b-a3b", Name: "Umans Qwen3.6 35B A3B (OpenAI)",
+			ContextWindow:   262144,
+			InputModalities: textAndImage, OutputModalities: textOnly,
+			Costs: umansPricing,
+			RecommendedParams: &InferenceParams{
+				MaxTokens: Ptr(32768),
+				Thinking:  &ThinkingParams{Enabled: true, Level: ThinkingLevelXHigh},
+			},
+		},
 	}
 
 	DefaultProviders = []ProviderConfig{
@@ -3292,6 +3438,12 @@ var (
 			Format:             APIFormatOpenAI,
 			EnvKey:             "OPENAI_API_KEY",
 			SupportsEmbeddings: true,
+		},
+		{
+			ID:                 "openai-responses",
+			Format:             APIFormatOpenAIResponses,
+			EnvKey:             "OPENAI_API_KEY",
+			SupportsEmbeddings: false,
 		},
 		{
 			ID:      "openai-codex",
@@ -3419,6 +3571,18 @@ var (
 			Format:  APIFormatAnthropic,
 			EnvKey:  "XIAOMI_API_KEY",
 			BaseURL: "https://token-plan-ams.xiaomimimo.com/anthropic",
+		},
+		{
+			ID:      "umans-anthropic",
+			Format:  APIFormatAnthropic,
+			EnvKey:  "UMANS_API_KEY",
+			BaseURL: "https://api.code.umans.ai",
+		},
+		{
+			ID:      "umans-openai",
+			Format:  APIFormatOpenAI,
+			EnvKey:  "UMANS_API_KEY",
+			BaseURL: "https://api.code.umans.ai/v1",
 		},
 	}
 

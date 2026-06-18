@@ -17,10 +17,11 @@ import (
 type APIFormat string
 
 const (
-	APIFormatOpenAI      APIFormat = "openai"
-	APIFormatOpenAICodex APIFormat = "openai_codex"
-	APIFormatAnthropic   APIFormat = "anthropic"
-	APIFormatGoogle      APIFormat = "google"
+	APIFormatOpenAI          APIFormat = "openai"
+	APIFormatOpenAICodex     APIFormat = "openai_codex"
+	APIFormatOpenAIResponses APIFormat = "openai_responses"
+	APIFormatAnthropic       APIFormat = "anthropic"
+	APIFormatGoogle          APIFormat = "google"
 )
 
 // TODO: add support for hosted tools/built in tools

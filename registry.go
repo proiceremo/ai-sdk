@@ -425,8 +425,21 @@ type Resolver struct {
 
 type Registry = Resolver
 
+var (
+	globalFactoriesMu sync.RWMutex
+	globalFactories   = make(map[APIFormat]ProviderFactory)
+)
+
+// RegisterProviderFactory registers a provider factory globally, which will be automatically
+// copied into any new Registry/Resolver instance.
+func RegisterProviderFactory(format APIFormat, factory ProviderFactory) {
+	globalFactoriesMu.Lock()
+	defer globalFactoriesMu.Unlock()
+	globalFactories[format] = factory
+}
+
 func NewResolver() *Resolver {
-	return &Resolver{
+	r := &Resolver{
 		providers:                  make(map[string]ProviderConfig),
 		factories:                  make(map[string]ProviderFactory),
 		models:                     make(map[string]ModelConfig),
@@ -440,7 +453,16 @@ func NewResolver() *Resolver {
 		providerBreakerMaxFailures: 5,
 		providerBreakerResetAfter:  2 * time.Minute,
 	}
+
+	globalFactoriesMu.RLock()
+	for fmt, fact := range globalFactories {
+		r.factories[string(fmt)] = fact
+	}
+	globalFactoriesMu.RUnlock()
+
+	return r
 }
+
 
 func NewRegistry() *Resolver {
 	return NewResolver()

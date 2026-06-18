@@ -122,7 +122,7 @@ func TestGoogleToolResultConversionPreservesDocumentTextAndMedia(t *testing.T) {
 				NewImageContentBlockFromURL("gs://bucket/cat.png", "image/png"),
 			},
 		}),
-	})
+	}, "gemini-test")
 	if err != nil {
 		t.Fatalf("toGoogleParts returned error: %v", err)
 	}
@@ -130,12 +130,12 @@ func TestGoogleToolResultConversionPreservesDocumentTextAndMedia(t *testing.T) {
 		t.Fatalf("unexpected tool result parts: %#v", parts)
 	}
 
-	output, ok := parts[0].FunctionResponse.Response["output"].(map[string]any)
+	output, ok := parts[0].FunctionResponse.Response["output"].(string)
 	if !ok {
-		t.Fatalf("expected structured output map, got %#v", parts[0].FunctionResponse.Response)
+		t.Fatalf("expected string output, got %#v", parts[0].FunctionResponse.Response["output"])
 	}
-	if got := output["part-1"]; got != "document body" {
-		t.Fatalf("expected document text to be preserved, got %#v", got)
+	if !strings.Contains(output, "document body") {
+		t.Fatalf("expected document text to be preserved, got %q", output)
 	}
 	if len(parts[0].FunctionResponse.Parts) != 1 {
 		t.Fatalf("expected one media response part, got %#v", parts[0].FunctionResponse.Parts)
